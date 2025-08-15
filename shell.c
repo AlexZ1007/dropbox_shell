@@ -6,6 +6,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#define MAX_ARGS 256
 
 /**
     * Function to execute the exit command.
@@ -66,11 +67,19 @@ char* read_command() {
 */
 void generateArgs(char *cmd, char *args[]) {
     char *token = strtok(cmd, " ");
+
+    args[0] = (char *)"dbxcli";
+
     int i = 1;
     while (token != NULL) {
         args[i] = token;
         i++;
         token = strtok(NULL, " ");
+
+        if(i == MAX_ARGS - 1) {
+            fprintf(stderr, "Too many arguments\n");
+            break; 
+        }
     }
     args[i] = NULL; 
 }
@@ -93,7 +102,7 @@ void execute_command(char *cmd) {
         perror("Fork failed");
         return;
     } else if (pid == 0) {
-        char *args[] = {"dbxcli"};
+        char *args[MAX_ARGS];
         generateArgs(cmd, args);
         execvp(args[0], args);
         perror("execvp failed");
@@ -101,7 +110,7 @@ void execute_command(char *cmd) {
     } else {
         wait(NULL); 
         // NOTE: the ls command does not print newline by default
-        if(strcmp(cmd, "ls") == 0)
+        if(strncmp(cmd, "ls", 2) == 0 && strncmp(cmd, "ls ", 3) == 0) 
             printf("\n");
     }
 }
